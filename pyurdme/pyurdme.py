@@ -1799,6 +1799,15 @@ class URDMEResult(dict):
         IPython.display.display(IPython.display.HTML(html+hstr))
 
 
+    def display_raw(self,species,time_index,opacity=1.0,wireframe=True):
+        """ Plot the trajectory as a PDE style plot. """
+        data = self.get_species(species,time_index,concentration=True)
+        fun = DolfinFunctionWrapper(self.model.mesh.get_function_space())
+        vec = fun.vector()
+        for i,d in enumerate(data):
+            vec[i] = d
+        return fun.display_raw(opacity=opacity, wireframe=wireframe)
+
     def display(self,species,time_index,opacity=1.0,wireframe=True):
         """ Plot the trajectory as a PDE style plot. """
         data = self.get_species(species,time_index,concentration=True)
@@ -1817,6 +1826,12 @@ class DolfinFunctionWrapper(dolfin.Function):
     def __init__(self, function_space):
         dolfin.Function.__init__(self, function_space)
 
+    def display_raw(self, opacity=1.0,wireframe=True):
+        u_vec = self.vector()
+        # Need to flatten the array for compatibility across Dolfin 1.4/1.5
+        c = _compute_colors(numpy.array(u_vec).flatten())
+        return URDMEMesh(self.function_space().mesh()).export_to_three_js(colors=c)
+
     def display(self, opacity=1.0,wireframe=True):
         """ Plot the solution in an IPython notebook.
 
@@ -1824,10 +1839,7 @@ class DolfinFunctionWrapper(dolfin.Function):
             wireframe:  toggle display of the wireframe mesh on and off.
 
             """
-        u_vec = self.vector()
-        # Need to flatten the array for compatibility across Dolfin 1.4/1.5
-        c = _compute_colors(numpy.array(u_vec).flatten())
-        jstr = URDMEMesh(self.function_space().mesh()).export_to_three_js(colors=c)
+	jstr = self.display_raw(opacity,wireframe)
         hstr = None
         with open(os.path.dirname(os.path.abspath(__file__))+"/data/three.js_templates/solution.html",'r') as fd:
             hstr = fd.read()
