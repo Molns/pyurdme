@@ -7,9 +7,6 @@
  */
 
 
-#include "hdf5.h"
-#include "hdf5_hl.h"
-#include "urdmemodel.h"
 
 /* Struct to hold variables used for incremental IO of trajectory data during the simulation. */
 typedef struct{
